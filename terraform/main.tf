@@ -75,6 +75,64 @@ resource "aws_iam_role" "external_secrets_irsa" {
   })
 }
 
+# Build S3 policy document
+data "aws_iam_policy_document" "datalake_s3" {
+  statement {
+    sid     = "DatalakeS3Access"
+    effect  = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:ListBucket",
+      "s3:DeleteObject"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.datalake_bucket}",
+      "arn:aws:s3:::${var.datalake_bucket}/*"
+    ]
+  }
+}
+
+# Optional Glue permissions appended to the same policy (if requested)
+data "aws_iam_policy_document" "datalake_full" {
+  source_json = data.aws_iam_policy_document.datalake_s3.json
+
+  dynamic "statement" {
+    for_each = var.allow_glue ? [1] : []
+    content {
+      sid     = "GluePermissions"
+      effect  = "Allow"
+      actions = [
+        "glue:GetDatabase",
+        "glue:GetTable",
+        "glue:CreatePartition",
+        "glue:BatchCreatePartition",
+        "glue:GetPartition",
+        "glue:BatchGetPartition"
+      ]
+      # Glue often requires wildcard resource; narrow later if needed
+      resources = ["*"]
+    }
+  }
+}
+
+# Create a managed IAM policy
+resource "aws_iam_policy" "datalake_policy" {
+  name        = "bankapp-datalake-policy-${var.datalake_bucket}"
+  description = "Allows app access to S3 datalake bucket ${var.datalake_bucket}"
+  policy      = data.aws_iam_policy_document.datalake_full.json
+  tags = {
+    ManagedBy = "terraform"
+    Project   = "bankapp"
+  }
+}
+
+# Attach the managed policy to the existing role
+resource "aws_iam_role_policy_attachment" "attach_policy_to_role" {
+  role       = data.aws_iam_role.external_secrets_role.name
+  policy_arn = aws_iam_policy.datalake_policy.arn
+}
+
 data "aws_iam_policy_document" "external_secrets_policy" {
   statement {
     effect = "Allow"
