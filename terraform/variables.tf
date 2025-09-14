@@ -23,3 +23,14 @@ variable "oidc_thumbprint" {
   type    = string
   default = ""
 }
+
+variable "datalake_bucket" {
+  type        = string
+  description = "Name of the S3 bucket to allow access to (no s3:// prefix)"
+  default     = "bankapp-datalake-dev"
+}
+
+variable "allow_glue" {
+  type    = bool
+  default = false
+}
