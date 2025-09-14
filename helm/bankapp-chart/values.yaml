@@ -33,9 +33,13 @@ externalSecrets:
 datalake:
   enabled: true
   bucket: bankapp-datalake-dev
-  region: ap-south-1
-# If using IRSA, set useIRSA: true and provide serviceAccount name/annotations
+  region: us-west-2
+
   useIRSA: true
+    irsa:
+      namespace: external-secrets
+      serviceAccountName: external-secrets-sa
+      iamRoleArn: arn:aws:iam::439499528500:role/external-secrets-role
 
 
 
