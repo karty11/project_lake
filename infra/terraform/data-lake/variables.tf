@@ -2,9 +2,9 @@ variable "region" {
   type = string
   default = "us-west-2" 
 }
-variable "environment" { 
-  type = string 
-  default = "dev" 
+variable "environment" {
+  description = "Deployment environment (dev, qa, prod)"
+  type        = string
 }
 variable "bucket_name" { 
   type = string
