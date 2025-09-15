@@ -1,10 +1,7 @@
 name: CI Pipeline
 
-# on:
-#  push:
-#    branches: [ "main" ]
 on:
-  workflow_dispatch:  # <-- manual trigger only
+  workflow_dispatch:  # manual trigger only
 
 jobs:
   compile:
@@ -73,19 +70,70 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
-
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
         uses: sonarsource/sonarqube-quality-gate-action@master
         with:
           pollingTimeoutSec: 600
         env:
-         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-         SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+
+  # ----------------------------------------------------------------
+  # New job: Run Terraform for data-lake (infra/terraform/data-lake)
+  # ----------------------------------------------------------------
+  tf_datalake:
+    runs-on: self-hosted
+    needs: build_project_and_sonar_scan
+    outputs:
+      datalake_bucket: ${{ steps.tf_apply.outputs.datalake_bucket }}
+      datalake_s3_arn: ${{ steps.tf_apply.outputs.datalake_s3_arn }}
+      glue_db: ${{ steps.tf_apply.outputs.glue_db }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (for Terraform)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Ensure jq installed
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y jq
+          fi
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.3.9
+
+      - name: Terraform init & apply (data-lake)
+        id: tf_apply
+        working-directory: infra/terraform/data-lake
+        env:
+          AWS_REGION: us-west-2
+        run: |
+          set -euo pipefail
+          echo "Running terraform in infra/terraform/data-lake ..."
+          terraform init -input=false
+          terraform apply -auto-approve -input=false -var="environment=dev" -var="region=${AWS_REGION:-us-west-2}"
+          terraform output -json > datalake-outputs.json
+          DATALAKE_BUCKET=$(jq -r '.bucket_name.value' datalake-outputs.json || echo "")
+          DATALAKE_S3_ARN=$(jq -r '.s3_arn.value' datalake-outputs.json || echo "")
+          GLUE_DB=$(jq -r '.glue_db.value' datalake-outputs.json || echo "")
+          echo "datalake_bucket=${DATALAKE_BUCKET}" >> $GITHUB_OUTPUT
+          echo "datalake_s3_arn=${DATALAKE_S3_ARN}" >> $GITHUB_OUTPUT
+          echo "glue_db=${GLUE_DB}" >> $GITHUB_OUTPUT
+          echo "Terraform apply finished. bucket=${DATALAKE_BUCKET}"
 
   builds_docker_image_and_push:
     runs-on: self-hosted
-    needs: build_project_and_sonar_scan
+    needs: [build_project_and_sonar_scan, tf_datalake]
     steps:
       - uses: actions/checkout@v4
       - name: Download JAR artifact
@@ -98,20 +146,17 @@ jobs:
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
-         platforms: all
-         image: tonistiigi/binfmt:latest 
-      
+          platforms: all
+          image: tonistiigi/binfmt:latest
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
           install: true
           use: true
           driver-opts: image=moby/buildkit:latest
-     
       - name: Build and Push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -121,3 +166,131 @@ jobs:
             karty11/newbankapp:latest
             karty11/newbankapp:${{ github.sha }}
           file: ./Dockerfile
+
+
+
+
+
+# name: CI Pipeline
+
+# # on:
+# #  push:
+# #    branches: [ "main" ]
+# on:
+#   workflow_dispatch:  # <-- manual trigger only
+
+# jobs:
+#   compile:
+#     runs-on: self-hosted
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Set up JDK 17
+#         uses: actions/setup-java@v4
+#         with:
+#           java-version: '17'
+#           distribution: 'temurin'
+#           cache: maven
+#       - name: Build with Maven
+#         run: mvn -B package --file pom.xml
+
+#   security-check:
+#     runs-on: self-hosted
+#     needs: compile
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Install Trivy and Scan
+#         run: |
+#           sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+#           wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+#           echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+#           sudo apt-get update -y
+#           sudo apt-get install -y trivy
+#           trivy fs --format table -o fs-report.json .
+#       - name: Gitleaks
+#         run: sudo apt install gitleaks -y && gitleaks detect source . -r gitleaks-report.json -f json
+
+#   test:
+#     runs-on: self-hosted
+#     needs: security-check
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Set up JDK 17
+#         uses: actions/setup-java@v4
+#         with:
+#           java-version: '17'
+#           distribution: 'temurin'
+#           cache: maven
+#       - name: Unit Test Cases
+#         run: mvn test
+
+#   build_project_and_sonar_scan:
+#     runs-on: self-hosted
+#     needs: test
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Set up JDK 17
+#         uses: actions/setup-java@v4
+#         with:
+#           java-version: '17'
+#           distribution: 'temurin'
+#           cache: maven
+#       - name: Build Project
+#         run: mvn package
+#       - name: Upload JAR artifact
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: app-jar
+#           path: target/*.jar
+#       - name: SonarQube Scan
+#         uses: SonarSource/sonarqube-scan-action@v5.3.0
+#         env:
+#           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+
+#       - name: SonarQube Quality Gate check
+#         id: sonarqube-quality-gate-check
+#         uses: sonarsource/sonarqube-quality-gate-action@master
+#         with:
+#           pollingTimeoutSec: 600
+#         env:
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+
+#   builds_docker_image_and_push:
+#     runs-on: self-hosted
+#     needs: build_project_and_sonar_scan
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Download JAR artifact
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: app-jar
+#           path: app
+#       - name: Login to Docker Hub
+#         uses: docker/login-action@v3
+#         with:
+#           username: ${{ vars.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+#       - name: Set up QEMU
+#         uses: docker/setup-qemu-action@v3
+#         with:
+#          platforms: all
+#          image: tonistiigi/binfmt:latest 
+      
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
+#         with:
+#           install: true
+#           use: true
+#           driver-opts: image=moby/buildkit:latest
+     
+#       - name: Build and Push Docker image
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: .
+#           push: true
+#           tags: |
+#             karty11/newbankapp:latest
+#             karty11/newbankapp:${{ github.sha }}
+#           file: ./Dockerfile
