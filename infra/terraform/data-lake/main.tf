@@ -23,13 +23,24 @@ resource "aws_s3_bucket" "datalake" {
   }
 }
 
+# Enforce Block Public Access
+resource "aws_s3_bucket_public_access_block" "datalake_block" {
+  bucket = aws_s3_bucket.datalake.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 # S3 encryption config
 resource "aws_s3_bucket_server_side_encryption_configuration" "datalake_encryption" {
   bucket = aws_s3_bucket.datalake.id
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = var.kms_key_arn
     }
   }
 }
