@@ -25,7 +25,7 @@
   </dependencyManagement>
 
   <dependencies>
-    <!-- AWS SDK v2 modules (version controlled by the BOM) -->
+    <!-- AWS SDK v2 modules (version is controlled by the BOM) -->
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>s3</artifactId>
@@ -48,7 +48,7 @@
       <version>2.15.2</version>
     </dependency>
 
-    <!-- add any other existing project dependencies below -->
+    <!-- keep your existing project deps here (JUnit, logging, DB drivers, etc.) -->
   </dependencies>
 
   <build>
