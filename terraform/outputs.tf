@@ -19,11 +19,7 @@ output "aws_identity_debug" {
 }
 
 output "role_name" {
-  value = data.aws_iam_role.external_secrets_role.name
-}
-
-output "role_arn" {
-  value = data.aws_iam_role.external_secrets_role.arn
+  value = aws_iam_role.external_secrets_irsa.name
 }
 
 output "datalake_policy_arn" {
