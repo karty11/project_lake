@@ -23,6 +23,32 @@ resource "aws_s3_bucket" "datalake" {
   }
 }
 
+resource "aws_s3_bucket_policy" "enforce_https" {
+  bucket = aws_s3_bucket.datalake.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "EnforceTLSRequestsOnly"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource = [
+          aws_s3_bucket.datalake.arn,
+          "${aws_s3_bucket.datalake.arn}/*"
+        ]
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      }
+    ]
+  })
+}
+
+
 # Enforce Block Public Access
 resource "aws_s3_bucket_public_access_block" "datalake_block" {
   bucket = aws_s3_bucket.datalake.id
@@ -44,6 +70,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "datalake_encrypti
     }
   }
 }
+
 
 # Optional Glue DB
 resource "aws_glue_catalog_database" "bankapp_db" {
