@@ -37,5 +37,5 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "datalake_encrypti
 # Optional Glue DB
 resource "aws_glue_catalog_database" "bankapp_db" {
   count = var.allow_glue ? 1 : 0
-  name  = "bankapp_datalake_db_dev"
+  name  = "bankapp_datalake_db_${var.environment}"
 }
