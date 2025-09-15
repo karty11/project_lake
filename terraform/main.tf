@@ -129,9 +129,10 @@ resource "aws_iam_policy" "datalake_policy" {
 
 # Attach the managed policy to the existing role
 resource "aws_iam_role_policy_attachment" "attach_policy_to_role" {
-  role       = data.aws_iam_role.external_secrets_role.name
+  role       = aws_iam_role.external_secrets_irsa.name
   policy_arn = aws_iam_policy.datalake_policy.arn
 }
+
 
 data "aws_iam_policy_document" "external_secrets_policy" {
   statement {
