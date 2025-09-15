@@ -4,17 +4,17 @@ provider "aws" {
 
 resource "aws_s3_bucket" "datalake" {
   bucket = var.bucket_name
-  acl    = "private"
+}
 
-  versioning { enabled = true }
+resource "aws_s3_bucket_server_side_encryption_configuration" "datalake_encryption" {
+  bucket = aws_s3_bucket.datalake.id
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
     }
   }
+}
 
   lifecycle_rule {
     id      = "archive-or-delete"
