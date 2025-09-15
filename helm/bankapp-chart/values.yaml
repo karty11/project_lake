@@ -34,12 +34,11 @@ datalake:
   enabled: true
   bucket: bankapp-datalake-dev
   region: us-west-2
-
   useIRSA: true
     irsa:
       namespace: external-secrets
       serviceAccountName: external-secrets-sa
-      iamRoleArn: arn:aws:iam::439499528500:role/external-secrets-role
+      iamRoleArn: arn:aws:iam::439499528500:role/external-secrets-irsa
 
 
 
