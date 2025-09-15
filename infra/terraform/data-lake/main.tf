@@ -2,10 +2,28 @@ provider "aws" {
   region = var.region
 }
 
+# S3 bucket
 resource "aws_s3_bucket" "datalake" {
   bucket = var.bucket_name
+
+  lifecycle_rule {
+    id      = "archive-or-delete"
+    enabled = true
+
+    expiration {
+      days = 3650 # 10 years
+    }
+
+    abort_incomplete_multipart_upload_days = 7
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = "bankapp"
+  }
 }
 
+# S3 encryption config
 resource "aws_s3_bucket_server_side_encryption_configuration" "datalake_encryption" {
   bucket = aws_s3_bucket.datalake.id
 
@@ -16,22 +34,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "datalake_encrypti
   }
 }
 
-  lifecycle_rule {
-    id      = "archive-or-delete"
-    enabled = true
-    expiration { days = 3650 } # 10 years
-    abort_incomplete_multipart_upload_days = 7
-  }
-
-  tags = {
-    Environment = var.environment
-    Project     = "bankapp"
-  }
-}
-
 # Optional Glue DB
 resource "aws_glue_catalog_database" "bankapp_db" {
   count = var.allow_glue ? 1 : 0
-  name  = "bankapp_datalake_db_${var.environment}"
+  name  = "bankapp_datalake_db_dev"
 }
-
