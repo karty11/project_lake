@@ -19,3 +19,8 @@ variable "allow_glue" {
   default = true
   description = "Set to true to create AWS Glue catalog database, false to skip."
 }
+variable "kms_key_arn" {
+  description = "KMS Key ARN for S3 encryption"
+  type        = string
+  default     = ""
+}
