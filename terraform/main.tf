@@ -93,10 +93,25 @@ data "aws_iam_policy_document" "datalake_s3" {
   }
 }
 
-# Optional Glue permissions appended to the same policy (if requested)
+# Build combined policy for datalake (S3 + optional Glue)
 data "aws_iam_policy_document" "datalake_full" {
-  source_json = data.aws_iam_policy_document.datalake_s3.json
+  # S3 statement (same as datalake_s3)
+  statement {
+    sid     = "DatalakeS3Access"
+    effect  = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:DeleteObject"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.datalake_bucket}",
+      "arn:aws:s3:::${var.datalake_bucket}/*"
+    ]
+  }
 
+  # Optional Glue permissions if requested
   dynamic "statement" {
     for_each = var.allow_glue ? [1] : []
     content {
@@ -110,7 +125,6 @@ data "aws_iam_policy_document" "datalake_full" {
         "glue:GetPartition",
         "glue:BatchGetPartition"
       ]
-      # Glue often requires wildcard resource; narrow later if needed
       resources = ["*"]
     }
   }
