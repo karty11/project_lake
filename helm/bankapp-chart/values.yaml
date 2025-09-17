@@ -22,7 +22,7 @@ externalSecrets:
   enabled: true
   k8sSecretName: bankapp-db-externalsecret
   providerSecretName: bankapp/mysql
-  refreshInterval: 1m
+  refreshInterval: "1m"
   awsRegion: us-west-2
   irsa:
     enabled: true
