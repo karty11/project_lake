@@ -19,3 +19,16 @@ resource "aws_glue_job" "mysql_to_s3" {
   glue_version = "4.0"
   max_capacity = 2
 }
+
+resource "aws_glue_crawler" "mysql_export_crawler" {
+  name         = "mysql-to-s3-crawler"
+  role         = aws_iam_role.glue_role.arn
+  database_name = aws_glue_catalog_database.datalake_db.name
+
+  s3_target {
+    path = "s3://${var.datalake_bucket}/bankapp/transactions/"
+  }
+
+  schedule = "cron(0 * * * ? *)" # run hourly
+}
+
