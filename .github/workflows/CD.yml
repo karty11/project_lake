@@ -198,6 +198,13 @@ jobs:
           else
             echo "externalsecret-db.yaml not found - skipping"
           fi
+      - name: Normalize line endings in values.yaml
+        run: |
+         if command -v dos2unix >/dev/null 2>&1; then
+         dos2unix helm/bankapp-chart/values.yaml
+         else
+         sed -i 's/\r$//' helm/bankapp-chart/values.yaml
+         fi
 
       # --- READ datalake.bucket from values.yaml (CI should have updated this) ---
       - name: Read datalake bucket from Helm values.yaml (CI writes this)
