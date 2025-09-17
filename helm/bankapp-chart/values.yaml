@@ -1,23 +1,18 @@
 replicaCount: 1
-
 image:
   repository: karty11/newbankapp
-  tag: latest
-
+  tag: 2aaf9b94140126553e2b8621412b0ffabab30d9e
 mysql:
   # Instead of storing creds here, only define DB name
   database: "bankappdb"
   # k8s secret name to fetch root password
   secretName: "bankapp-db-externalsecret"
-  rootPasswordKey: "password"   # key inside the secret
-  usernameKey: "username"       # key inside the secret
-
+  rootPasswordKey: "password" # key inside the secret
+  usernameKey: "username" # key inside the secret
 service:
   type: "LoadBalancer"
   port: 80
-
 resources: {}
-
 externalSecrets:
   enabled: true
   k8sSecretName: "bankapp-db-externalsecret"
@@ -29,7 +24,6 @@ externalSecrets:
     namespace: "external-secrets"
     serviceAccountName: "external-secrets-sa"
     iamRoleArn: "arn:aws:iam::439499528500:role/external-secrets-irsa"
-
 datalake:
   enabled: true
   bucket: "bankapp-datalake-dev"
@@ -39,22 +33,6 @@ datalake:
     namespace: "external-secrets"
     serviceAccountName: "external-secrets-sa"
     iamRoleArn: "arn:aws:iam::439499528500:role/external-secrets-irsa"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # replicaCount: 1
 # image:
 #   repository: karty11/newbankapp
@@ -66,7 +44,6 @@ datalake:
 #   type: LoadBalancer
 #   port: 80
 # resources: {}
-
 # externalSecrets:
 #   enabled: true
 #   # name of k8s Secret to be created by ExternalSecret:
