@@ -391,9 +391,23 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          set -x
-          git push origin "HEAD:${BRANCH}" || true
-          echo "Pushed updated commit (if any) to ${BRANCH}."
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Make sure we’re on the right branch
+          git fetch origin "${BRANCH}"
+          git checkout "${BRANCH}"
+
+          # Stage and commit values.yaml
+          git add helm/bankapp-chart/values.yaml
+          if git diff --cached --quiet; then
+            echo "No changes to commit in values.yaml"
+          else
+            git commit -m "Update bankapp image to ${IMAGE_TAG}"
+            git push "https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${{ github.repository }}" "${BRANCH}"
+            echo "Pushed updated values.yaml to ${BRANCH}"
+          fi
+
 
       - name: Print Argo CD initial admin password (for reference)
         run: |
