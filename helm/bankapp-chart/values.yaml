@@ -1,44 +1,44 @@
 replicaCount: 1
 
 image:
-  repository: karty11/newbankapp
-  tag: 9fe91dc1b07b750cae6b444093dacffa020bd366
+  repository: "karty11/newbankapp"
+  tag: "01b71fc558ea521c9aa4b2ca8f9a1bcb1d31734f"
 
 mysql:
   # Instead of storing creds here, only define DB name
   database: "bankappdb"
   # k8s secret name to fetch root password
-  secretName: bankapp-db-externalsecret
-  rootPasswordKey: password   # key inside the secret
-  usernameKey: username       # key inside the secret
+  secretName: "bankapp-db-externalsecret"
+  rootPasswordKey: "password"   # key inside the secret
+  usernameKey: "username"       # key inside the secret
 
 service:
-  type: LoadBalancer
+  type: "LoadBalancer"
   port: 80
 
 resources: {}
 
 externalSecrets:
   enabled: true
-  k8sSecretName: bankapp-db-externalsecret
-  providerSecretName: bankapp/mysql
+  k8sSecretName: "bankapp-db-externalsecret"
+  providerSecretName: "bankapp/mysql"
   refreshInterval: "1m"
-  awsRegion: us-west-2
+  awsRegion: "us-west-2"
   irsa:
     enabled: true
-    namespace: external-secrets
-    serviceAccountName: external-secrets-sa
-    iamRoleArn: arn:aws:iam::439499528500:role/external-secrets-irsa
+    namespace: "external-secrets"
+    serviceAccountName: "external-secrets-sa"
+    iamRoleArn: "arn:aws:iam::439499528500:role/external-secrets-irsa"
 
 datalake:
   enabled: true
-  bucket: bankapp-datalake-dev
-  region: us-west-2
+  bucket: "bankapp-datalake-dev"
+  region: "us-west-2"
   useIRSA: true
   irsa:
-    namespace: external-secrets
-    serviceAccountName: external-secrets-sa
-    iamRoleArn: arn:aws:iam::439499528500:role/external-secrets-irsa
+    namespace: "external-secrets"
+    serviceAccountName: "external-secrets-sa"
+    iamRoleArn: "arn:aws:iam::439499528500:role/external-secrets-irsa"
 
 
 
