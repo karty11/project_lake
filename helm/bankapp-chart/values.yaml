@@ -1,7 +1,7 @@
 replicaCount: 1
 image:
   repository: karty11/newbankapp
-  tag: latest
+  tag: e27ca68672735b95baa55a12e71983b479ec0b3d
 mysql:
   # Instead of storing creds here, only define DB name
   database: "bankappdb"
@@ -55,7 +55,6 @@ datalake:
 #   refreshInterval: 1m
 #   # AWS region for SecretStore
 #   awsRegion: us-west-2
-
 #   irsa:
 #     enabled: true
 #     namespace: external-secrets         # namespace where operator runs (change if different)
