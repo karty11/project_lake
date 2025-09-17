@@ -391,23 +391,34 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          echo "Updating helm/bankapp-chart/values.yaml with image tag: ${IMAGE_TAG}"
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Make sure we’re on the right branch
+          # Make sure we're on the right branch
           git fetch origin "${BRANCH}"
           git checkout "${BRANCH}"
 
-          # Stage and commit values.yaml
+          # Normalize CRLF endings (safety for yq)
+          sed -i 's/\r$//' helm/bankapp-chart/values.yaml || true
+
+          # Update image.repository and image.tag
+          yq eval -i ".image.repository = \"karty11/newbankapp\"" helm/bankapp-chart/values.yaml
+          yq eval -i ".image.tag = \"${IMAGE_TAG}\"" helm/bankapp-chart/values.yaml
+
+          echo "values.yaml after update:"
+          yq eval '.image' helm/bankapp-chart/values.yaml
+
+          # Stage and commit only if changed
           git add helm/bankapp-chart/values.yaml
           if git diff --cached --quiet; then
             echo "No changes to commit in values.yaml"
           else
-            git commit -m "Update bankapp image to ${IMAGE_TAG}"
+            git commit -m "CD: update bankapp image to ${IMAGE_TAG}"
             git push "https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${{ github.repository }}" "${BRANCH}"
-            echo "Pushed updated values.yaml to ${BRANCH}"
+            echo "Updated values.yaml and pushed to ${BRANCH}"
           fi
-
 
       - name: Print Argo CD initial admin password (for reference)
         run: |
