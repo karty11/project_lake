@@ -66,20 +66,20 @@ jobs:
           echo "Using image tag: $TAG"
           echo "image_tag=$TAG" >> $GITHUB_OUTPUT
 
-      # --- Update values.yaml ---
-      - name: Update Helm values.yaml with new image tag
-        env:
-          IMAGE_TAG: ${{ steps.docker_tag.outputs.image_tag }}
-        run: |
-          set -euo pipefail
-          echo "Updating helm/bankapp-chart/values.yaml with image.tag=${IMAGE_TAG}"
-          # Normalize line endings
-          sed -i 's/\r$//' helm/bankapp-chart/values.yaml || true
-          # Update repository and tag
-          yq eval -i ".image.repository = \"karty11/newbankapp\"" helm/bankapp-chart/values.yaml
-          yq eval -i ".image.tag = \"${IMAGE_TAG}\"" helm/bankapp-chart/values.yaml
-          echo "Updated values.yaml:"
-          yq eval '.image' helm/bankapp-chart/values.yaml
+      # # --- Update values.yaml ---
+      # - name: Update Helm values.yaml with new image tag
+      #   env:
+      #     IMAGE_TAG: ${{ steps.docker_tag.outputs.image_tag }}
+      #   run: |
+      #     set -euo pipefail
+      #     echo "Updating helm/bankapp-chart/values.yaml with image.tag=${IMAGE_TAG}"
+      #     # Normalize line endings
+      #     sed -i 's/\r$//' helm/bankapp-chart/values.yaml || true
+      #     # Update repository and tag
+      #     yq eval -i ".image.repository = \"karty11/newbankapp\"" helm/bankapp-chart/values.yaml
+      #     yq eval -i ".image.tag = \"${IMAGE_TAG}\"" helm/bankapp-chart/values.yaml
+      #     echo "Updated values.yaml:"
+      #     yq eval '.image' helm/bankapp-chart/values.yaml
 
       # --- Commit & Push ---
       - name: Commit and push changes
