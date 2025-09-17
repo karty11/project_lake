@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/karty11/New_project.git'
+    repoURL: 'https://github.com/karty11/project_lake.git'
     path: 'helm/bankapp-chart'
     targetRevision: main
     helm:
