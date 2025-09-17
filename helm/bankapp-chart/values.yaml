@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: "karty11/newbankapp"
+  repository: karty11/newbankapp
   tag: latest
 
 mysql:
