@@ -18,10 +18,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "datalake_lifecycle" {
       days = 30
     }
   }
-  tags = {
-    Environment = var.environment
-    Project     = "bankapp"
-  }
 }
 
 resource "aws_s3_bucket_policy" "enforce_https" {
