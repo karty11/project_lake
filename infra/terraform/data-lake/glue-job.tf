@@ -84,7 +84,7 @@ resource "aws_glue_crawler" "mysql_export_crawler" {
 data "aws_security_group" "glue_sg" {
   filter {
     name   = "group-name"
-    values = ["glue-sg"] # change to your SG name
+    values = ["project_cluster_sg"] # change to your SG name
   }
   vpc_id = var.vpc_id
 }
