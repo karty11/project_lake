@@ -120,7 +120,7 @@ jobs:
 
       - name: Terraform init & apply (data-lake)
         id: tf_apply
-        working-directory: infra/terraform/data-lake
+        working-directory: infra
         env:
           AWS_REGION: us-west-2
         run: |
