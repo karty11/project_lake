@@ -1,15 +1,14 @@
 resource "aws_glue_connection" "mysql_connection" {
-  name = "bankapp-mysql-connection"
+  name = "mysql-connection"
 
   connection_properties = {
-    JDBC_CONNECTION_URL = "jdbc:mysql://mysql.devproject.svc.cluster.local:3306/bankapp"
-    USERNAME            = "root"
-    PASSWORD            = "Test@123"
+    JDBC_CONNECTION_URL = "jdbc:mysql://${var.mysql_host}:${var.mysql_port}/${var.mysql_db}"
+    USERNAME            = var.mysql_username
+    PASSWORD            = var.mysql_password
   }
 
   physical_connection_requirements {
-    availability_zone      = "us-west-2a"
-    security_group_id_list = [aws_security_group.glue_sg.id]
-    subnet_id              = aws_subnet.private_subnet1.id
+    security_group_id_list = [data.aws_security_group.glue_sg.id]
+    subnet_id              = data.aws_subnet.private_subnet1.id
   }
 }
