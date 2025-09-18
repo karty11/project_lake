@@ -24,3 +24,8 @@ variable "kms_key_arn" {
   type        = string
   default     = ""
 }
+
+variable "datalake_bucket" {
+  description = "Name of the S3 bucket to store Glue scripts, tmp data, and outputs"
+  type        = string
+}
