@@ -34,3 +34,30 @@ variable "vpc_id" {
   description = ""
   type        = string
 }
+
+variable "mysql_host" {
+  description = "MySQL host or service endpoint"
+  type        = string
+}
+
+variable "mysql_port" {
+  description = "MySQL port number"
+  type        = number
+  default     = 3306
+}
+
+variable "mysql_db" {
+  description = "MySQL database name"
+  type        = string
+}
+
+variable "mysql_username" {
+  description = "MySQL username"
+  type        = string
+}
+
+variable "mysql_password" {
+  description = "MySQL password"
+  type        = string
+  sensitive   = true
+}
