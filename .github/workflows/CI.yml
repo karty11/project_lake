@@ -126,7 +126,7 @@ jobs:
         run: |
           set -euo pipefail
           terraform init -input=false
-          terraform apply -auto-approve -input=false -var="environment=dev" -var="region=${AWS_REGION:-us-west-2}"
+          terraform apply -auto-approve -input=false -var="environment=dev" -var="region=${AWS_REGION:-us-west-2}" -var="datalake_bucket=datalake_bucket"
           terraform output -json > datalake-outputs.json
           DATALAKE_BUCKET=$(jq -r '.bucket_name.value' datalake-outputs.json || echo "")
           DATALAKE_S3_ARN=$(jq -r '.s3_arn.value' datalake-outputs.json || echo "")
