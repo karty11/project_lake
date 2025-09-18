@@ -29,3 +29,8 @@ variable "datalake_bucket" {
   description = "Name of the S3 bucket to store Glue scripts, tmp data, and outputs"
   type        = string
 }
+
+variable "vpc_id" {
+  description = ""
+  type        = string
+}
