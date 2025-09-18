@@ -5,6 +5,7 @@ variable "region" {
 variable "environment" {
   description = "Deployment environment (dev, qa, prod)"
   type        = string
+  default     = "dev"
 }
 variable "bucket_name" { 
   type = string
