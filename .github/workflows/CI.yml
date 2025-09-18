@@ -107,7 +107,11 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y jq
         fi
-
+    - name: Install Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.3.9
+        
     - name: Install Terragrunt
       run: |
         TG_VERSION=0.67.11
