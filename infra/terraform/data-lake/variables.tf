@@ -63,8 +63,4 @@ variable "mysql_password" {
   sensitive   = true
 }
 
-variable "glue_role_arn" {
-  description = "IAM role ARN that Glue jobs and crawlers will assume"
-  type        = string
-}
 
