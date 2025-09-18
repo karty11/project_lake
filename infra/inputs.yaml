@@ -5,4 +5,4 @@ mysql_host: mysql-service.devproject.svc.cluster.local
 mysql_port: 3306
 mysql_db: bankapp
 mysql_username: root
-mysql_password: supersecret
+mysql_password: Test@123
