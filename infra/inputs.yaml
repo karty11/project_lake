@@ -7,3 +7,5 @@ mysql_db: bankapp
 mysql_username: root
 mysql_password: Test@123
 environment: dev
+glue_role_arn: arn:aws:iam::439499528500:role/<your-glue-role>
+
