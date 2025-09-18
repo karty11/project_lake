@@ -117,24 +117,43 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.3.9
+      - name: Install Terragrunt
+        run: |
+          TG_VERSION=0.67.11
+          wget https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64
+          sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
+          sudo chmod +x /usr/local/bin/terragrunt     
 
-      - name: Terraform init & apply (data-lake)
+      - name: Terragrunt apply (data-lake)
         id: tf_apply
-        working-directory: infra
+        working-directory: infra   # where terragrunt.hcl + inputs.yaml exist
         env:
           AWS_REGION: us-west-2
         run: |
           set -euo pipefail
-          terraform init -input=false
-          terraform apply -auto-approve -input=false -var="environment=dev" -var="region=${AWS_REGION:-us-west-2}" -var="datalake_bucket=datalake_bucket"
-          terraform output -json > datalake-outputs.json
-          DATALAKE_BUCKET=$(jq -r '.bucket_name.value' datalake-outputs.json || echo "")
-          DATALAKE_S3_ARN=$(jq -r '.s3_arn.value' datalake-outputs.json || echo "")
-          GLUE_DB=$(jq -r '.glue_db.value' datalake-outputs.json || echo "")
-          echo "datalake_bucket=${DATALAKE_BUCKET}" >> $GITHUB_OUTPUT
-          echo "datalake_s3_arn=${DATALAKE_S3_ARN}" >> $GITHUB_OUTPUT
-          echo "glue_db=${GLUE_DB}" >> $GITHUB_OUTPUT
+          terragrunt apply -auto-approve
+          # terraform apply -auto-approve -input=false -var="environment=dev" -var="region=${AWS_REGION:-us-west-2}" -var="datalake_bucket=datalake_bucket"
+          # terraform output -json > datalake-outputs.json
+          # DATALAKE_BUCKET=$(jq -r '.bucket_name.value' datalake-outputs.json || echo "")
+          # DATALAKE_S3_ARN=$(jq -r '.s3_arn.value' datalake-outputs.json || echo "")
+          # GLUE_DB=$(jq -r '.glue_db.value' datalake-outputs.json || echo "")
+          # echo "datalake_bucket=${DATALAKE_BUCKET}" >> $GITHUB_OUTPUT
+          # echo "datalake_s3_arn=${DATALAKE_S3_ARN}" >> $GITHUB_OUTPUT
+          # echo "glue_db=${GLUE_DB}" >> $GITHUB_OUTPUT
+          terragrunt output -json > datalake-outputs.json
+          DATALAKE_BUCKET=$(jq -r '.datalake_bucket.value' datalake-outputs.json || echo "")
+          GLUE_DB=$(jq -r '.datalake_db.value' datalake-outputs.json || echo "")
+          GLUE_JOB_NAME=$(jq -r '.glue_job_name.value' datalake-outputs.json || echo "")
+          GLUE_CRAWLER_NAME=$(jq -r '.glue_crawler_name.value' datalake-outputs.json || echo "")
 
+          echo "datalake_bucket=${DATALAKE_BUCKET}" >> $GITHUB_OUTPUT
+          echo "glue_db=${GLUE_DB}" >> $GITHUB_OUTPUT
+          echo "glue_job_name=${GLUE_JOB_NAME}" >> $GITHUB_OUTPUT
+          echo "glue_crawler_name=${GLUE_CRAWLER_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Upload Glue ETL script to S3
+        run: |
+          aws s3 cp infra/glue-scripts/mysql_to_s3.py s3://${{ steps.tf_apply.outputs.datalake_bucket }}/scripts/mysql_to_s3.py
   builds_docker_image_and_push:
     runs-on: self-hosted
     needs: [build_project_and_sonar_scan, tf_datalake]
