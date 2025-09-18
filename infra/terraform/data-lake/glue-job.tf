@@ -4,6 +4,42 @@ data "aws_caller_identity" "current" {}
 resource "aws_glue_catalog_database" "datalake_db" {
   name = "datalake_db"
 }
+
+############################################
+# IAM Role for Glue
+############################################
+
+resource "aws_iam_role" "glue_role" {
+  name = "GlueJobRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "glue.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+# Attach AWS managed Glue policy (basic permissions for Glue service)
+resource "aws_iam_role_policy_attachment" "glue_service_policy" {
+  role       = aws_iam_role.glue_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+}
+
+# Attach your extra custom policy (S3 + SecretsManager)
+resource "aws_iam_role_policy_attachment" "glue_extra_policy_attach" {
+  role       = aws_iam_role.glue_role.name
+  policy_arn = aws_iam_policy.glue_extra_policy.arn
+}
+
+
+
 resource "aws_iam_policy" "glue_extra_policy" {
   name        = "glue-extra-policy"
   description = "Extra permissions for Glue job"
@@ -42,7 +78,7 @@ resource "aws_iam_policy" "glue_extra_policy" {
 
 resource "aws_glue_job" "mysql_to_s3" {
   name     = "mysql-to-s3"
-  role_arn = var.glue_role_arn
+  role_arn = aws_iam_role.glue_role.arn 
 
   command {
     name            = "glueetl"
@@ -67,7 +103,7 @@ resource "aws_glue_job" "mysql_to_s3" {
 
 resource "aws_glue_crawler" "mysql_export_crawler" {
   name         = "mysql-export-crawler"
-  role         = var.glue_role_arn
+  role         = aws_iam_role.glue_role.arn 
   database_name = aws_glue_catalog_database.datalake_db.name
 
   s3_target {
