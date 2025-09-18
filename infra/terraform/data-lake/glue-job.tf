@@ -39,6 +39,7 @@ resource "aws_iam_policy" "glue_extra_policy" {
 ############################################
 # Glue Job to export MySQL data to S3
 ############################################
+
 resource "aws_glue_job" "mysql_to_s3" {
   name     = "mysql-to-s3"
   role_arn = var.glue_role_arn
@@ -63,6 +64,7 @@ resource "aws_glue_job" "mysql_to_s3" {
 ############################################
 # Glue crawler for exported data
 ############################################
+
 resource "aws_glue_crawler" "mysql_export_crawler" {
   name         = "mysql-export-crawler"
   role         = var.glue_role_arn
@@ -81,10 +83,11 @@ resource "aws_glue_crawler" "mysql_export_crawler" {
 ############################################
 # Data lookups for existing infra
 ############################################
+
 data "aws_security_group" "glue_sg" {
   filter {
     name   = "group-name"
-    values = ["project_cluster_sg"] # change to your SG name
+    values = ["project-node-sg"] # change to your SG name
   }
   vpc_id = var.vpc_id
 }
@@ -92,7 +95,7 @@ data "aws_security_group" "glue_sg" {
 data "aws_subnet" "private_subnet1" {
   filter {
     name   = "tag:Name"
-    values = ["private-subnet-1"] # change to your subnet tag
+    values = ["project-subnet-1"] # change to your subnet tag
   }
 }
 
