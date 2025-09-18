@@ -1,4 +1,3 @@
-
 name: CI Pipeline
 
 on:
@@ -20,7 +19,7 @@ jobs:
           mvn clean package -U
           mvn -B package --file pom.xml
           mvn dependency:tree -Dincludes=software.amazon.awssdk
-           
+
   security-check:
     runs-on: self-hosted
     needs: compile
@@ -90,6 +89,8 @@ jobs:
       datalake_bucket: ${{ steps.tf_apply.outputs.datalake_bucket }}
       datalake_s3_arn: ${{ steps.tf_apply.outputs.datalake_s3_arn }}
       glue_db: ${{ steps.tf_apply.outputs.glue_db }}
+      glue_job_name: ${{ steps.tf_apply.outputs.glue_job_name }}
+      glue_crawler_name: ${{ steps.tf_apply.outputs.glue_crawler_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -107,7 +108,7 @@ jobs:
             sudo apt-get update -y
             sudo apt-get install -y jq
           fi
-          
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
@@ -127,13 +128,23 @@ jobs:
           set -euo pipefail
           terraform init -input=false
           terraform apply -auto-approve -input=false -var="environment=dev" -var="region=${AWS_REGION:-us-west-2}" -var="datalake_bucket=datalake_bucket"
+
           terraform output -json > datalake-outputs.json
           DATALAKE_BUCKET=$(jq -r '.bucket_name.value' datalake-outputs.json || echo "")
           DATALAKE_S3_ARN=$(jq -r '.s3_arn.value' datalake-outputs.json || echo "")
           GLUE_DB=$(jq -r '.glue_db.value' datalake-outputs.json || echo "")
+          GLUE_JOB_NAME=$(jq -r '.glue_job_name.value' datalake-outputs.json || echo "")
+          GLUE_CRAWLER_NAME=$(jq -r '.glue_crawler_name.value' datalake-outputs.json || echo "")
+
           echo "datalake_bucket=${DATALAKE_BUCKET}" >> $GITHUB_OUTPUT
           echo "datalake_s3_arn=${DATALAKE_S3_ARN}" >> $GITHUB_OUTPUT
           echo "glue_db=${GLUE_DB}" >> $GITHUB_OUTPUT
+          echo "glue_job_name=${GLUE_JOB_NAME}" >> $GITHUB_OUTPUT
+          echo "glue_crawler_name=${GLUE_CRAWLER_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Upload Glue ETL script to S3
+        run: |
+          aws s3 cp infra/glue-scripts/mysql_to_s3.py s3://${{ steps.tf_apply.outputs.datalake_bucket }}/scripts/mysql_to_s3.py
 
   builds_docker_image_and_push:
     runs-on: self-hosted
@@ -180,6 +191,7 @@ jobs:
           docker push $IMAGE_REPO:$IMAGE_TAG_SHA
           docker push $IMAGE_REPO:$IMAGE_TAG_BRANCH
           docker push $IMAGE_REPO:latest
+
 
 
 # name: CI Pipeline
