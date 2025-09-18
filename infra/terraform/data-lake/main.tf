@@ -4,19 +4,20 @@ provider "aws" {
 
 # S3 bucket
 resource "aws_s3_bucket" "datalake" {
-  bucket = var.bucket_name
+  bucket = var.datalake_bucket
+}
 
-  lifecycle_rule {
-    id      = "archive-or-delete"
-    enabled = true
+resource "aws_s3_bucket_lifecycle_configuration" "datalake_lifecycle" {
+  bucket = aws_s3_bucket.datalake.id
+
+  rule {
+    id     = "expire-logs"
+    status = "Enabled"
 
     expiration {
-      days = 3650 # 10 years
+      days = 30
     }
-
-    abort_incomplete_multipart_upload_days = 7
   }
-
   tags = {
     Environment = var.environment
     Project     = "bankapp"
